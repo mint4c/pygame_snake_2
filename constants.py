@@ -41,3 +41,11 @@ snake_tail_img = pygame.image.load(path.join(img_dir, "snake_tail.png")).convert
 pause_button_img = pygame.image.load(path.join(img_dir, "pause_button.png")).convert_alpha()
 
 pygame.display.set_icon(icon_img)
+
+
+DATA_DIR = path.join(path.dirname(__file__), 'data')
+
+DATA_FILE = path.join(
+    DATA_DIR,
+    'raw_game_data.csv'
+)

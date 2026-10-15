@@ -1,0 +1,20 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="astroid" />
+          <option value="dill" />
+          <option value="isort" />
+          <option value="mccabe" />
+          <option value="platformdirs" />
+          <option value="pylint" />
+          <option value="pylint-django" />
+          <option value="pylint-plugin-utils" />
+          <option value="tomlkit" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

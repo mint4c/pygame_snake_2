@@ -8,6 +8,7 @@ import constants as c
 import sprites
 import random
 
+import ai_player
 from data_collector import SnakeDataCollector
 
 
@@ -17,6 +18,23 @@ KEY_TO_ACTION = {
     pygame.K_UP: "up",
     pygame.K_DOWN: "down",
 }
+
+
+# режими керування
+MODE_HUMAN = "HUMAN"
+MODE_AI = "AI"
+
+# клавіша перемикання режимів
+SWITCH_MODE_KEY = pygame.K_m
+
+# True - виводити в консоль стан гри та прогноз моделі
+AI_DEBUG = True
+
+# поточний режим (гра стартує в ручному режимі)
+control_mode = MODE_HUMAN
+
+# завантажуємо навчену модель один раз при запуску
+ai_player.load_model()
 
 
 # functions
@@ -73,6 +91,14 @@ def start_screen():
             27,
             c.WIDTH / 2 - 27,
             180
+        )
+
+        text_to_screen(
+            "→ Press M to switch HUMAN / AI",
+            c.BROWN,
+            27,
+            c.WIDTH / 2 - 5,
+            220
         )
 
         text_to_screen(
@@ -220,6 +246,48 @@ def get_current_food():
     )
 
 
+def switch_mode():
+    # перемикає режим керування HUMAN <-> AI
+    global control_mode
+
+    if control_mode == MODE_HUMAN:
+        if ai_player.is_loaded():
+            control_mode = MODE_AI
+        else:
+            print(
+                "AI недоступний: модель не завантажено. "
+                "Спочатку запустіть model_trainer.py."
+            )
+    else:
+        control_mode = MODE_HUMAN
+
+    print("Control mode:", control_mode)
+
+
+def run_ai_step():
+    # один крок AI: стан -> прогноз -> дія
+    state = ai_player.get_game_state(
+        snake,
+        get_current_food()
+    )
+
+    if state is None:
+        return
+
+    action = ai_player.predict_action(
+        state
+    )
+
+    changed = ai_player.apply_action(
+        snake,
+        action
+    )
+
+    if AI_DEBUG and changed:
+        print("STATE:", state)
+        print("ACTION:", action)
+
+
 # game loop
 def gameLoop():
     game = True
@@ -239,18 +307,29 @@ def gameLoop():
                     pause_screen()
                     continue
 
-                action = KEY_TO_ACTION.get(
-                    event.key
-                )
+                if event.key == SWITCH_MODE_KEY:
+                    switch_mode()
+                    continue
 
-                if action is not None:
-                    data_collector.collect(
-                        snake,
-                        get_current_food(),
-                        action
+                # у режимі AI стрілки ігноруються,
+                # дії моделі в датасет не записуються
+                if control_mode == MODE_HUMAN:
+                    action = KEY_TO_ACTION.get(
+                        event.key
                     )
 
-                    snake.set_direction(action)
+                    if action is not None:
+                        data_collector.collect(
+                            snake,
+                            get_current_food(),
+                            action
+                        )
+
+                        snake.set_direction(action)
+
+        # у режимі AI рішення приймає модель
+        if control_mode == MODE_AI:
+            run_ai_step()
 
         # if snake touches edges, game over!
         if (
@@ -387,6 +466,21 @@ def gameLoop():
             18,
             105,
             70
+        )
+
+        # поточний режим керування
+        mode_color = (
+            c.RED
+            if control_mode == MODE_AI
+            else c.GREEN
+        )
+
+        text_to_screen(
+            "Mode: " + control_mode + " (M - switch)",
+            mode_color,
+            18,
+            115,
+            95
         )
 
         pygame.display.update()
